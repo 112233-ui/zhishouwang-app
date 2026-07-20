@@ -1,0 +1,58 @@
+name: build-apk
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Scaffold Flutter project + overlay shell
+        run: |
+          flutter create --org com.fphsjypt --project-name zhishouwang --platforms=android app
+          cp lib/main.dart app/lib/main.dart
+          cp pubspec.yaml app/pubspec.yaml
+          M=app/android/app/src/main/AndroidManifest.xml
+          sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CAMERA"/>\n    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>\n    <application#' "$M"
+          sed -i 's#android:label="[^"]*"#android:label="智收网"#' "$M"
+          echo "----- manifest head -----"
+          head -20 "$M"
+
+      - name: Build release APK
+        run: |
+          cd app
+          flutter pub get
+          flutter build apk --release
+
+      - name: Rename
+        run: cp app/build/app/outputs/flutter-apk/app-release.apk zhishouwang-v31.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zhishouwang-apk
+          path: zhishouwang-v31.apk
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.31.0
+          name: 智收网 App v0.31.0
+          body: WebView 壳,加载 www.fphsjypt.com,与网页永久同步。
+          files: zhishouwang-v31.apk
