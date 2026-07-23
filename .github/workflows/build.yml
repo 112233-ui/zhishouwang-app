@@ -45,6 +45,16 @@ jobs:
           dart run flutter_launcher_icons
           flutter build apk --release
 
+      - name: Sign with stable key (固定签名,以后可覆盖安装升级)
+        run: |
+          echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > /tmp/zsw.jks
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          BT=$(ls -d "$SDK"/build-tools/*/ | sort -V | tail -1)
+          APK=app/build/app/outputs/flutter-apk/app-release.apk
+          "${BT}apksigner" sign --ks /tmp/zsw.jks --ks-pass "pass:${{ secrets.KS_PASS }}" \
+            --ks-key-alias "${{ secrets.KEY_ALIAS }}" --key-pass "pass:${{ secrets.KEY_PASS }}" "$APK"
+          "${BT}apksigner" verify --print-certs "$APK" | head -4
+
       - name: Rename
         run: cp app/build/app/outputs/flutter-apk/app-release.apk zhishouwang-v31.apk
 
