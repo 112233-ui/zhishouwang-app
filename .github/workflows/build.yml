@@ -30,6 +30,7 @@ jobs:
           flutter create --org com.fphsjypt --project-name zhishouwang --platforms=android app
           cp lib/main.dart app/lib/main.dart
           cp pubspec.yaml app/pubspec.yaml
+          cp icon.png app/icon.png
           M=app/android/app/src/main/AndroidManifest.xml
           sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CAMERA"/>\n    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>\n    <application#' "$M"
           sed -i 's#android:label="[^"]*"#android:label="智收网"#' "$M"
@@ -40,6 +41,7 @@ jobs:
         run: |
           cd app
           flutter pub get
+          dart run flutter_launcher_icons
           flutter build apk --release
 
       - name: Rename
