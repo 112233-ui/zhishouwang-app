@@ -34,8 +34,9 @@ jobs:
           M=app/android/app/src/main/AndroidManifest.xml
           sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CAMERA"/>\n    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>\n    <application#' "$M"
           sed -i 's#android:label="[^"]*"#android:label="智收网"#' "$M"
+          sed -i 's#<application#<queries><intent><action android:name="android.intent.action.DIAL"/></intent><intent><action android:name="android.intent.action.VIEW"/><data android:scheme="tel"/></intent><intent><action android:name="android.intent.action.SENDTO"/><data android:scheme="mailto"/></intent></queries>\n    <application#' "$M"
           echo "----- manifest head -----"
-          head -20 "$M"
+          head -24 "$M"
 
       - name: Build release APK
         run: |

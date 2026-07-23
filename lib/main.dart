@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // 智收网 · 安卓壳 App —— 全屏加载 www.fphsjypt.com。
 // 网页更新 = App 自动同步(视频/动态/群组/以后任何新功能),永不重打包。
@@ -58,6 +59,7 @@ class _WebShellState extends State<WebShell> {
                   geolocationEnabled: true,         // 发位置
                   supportZoom: false,
                   transparentBackground: false,
+                  useShouldOverrideUrlLoading: true, // 拦 tel:/mailto:/微信 等外部协议
                 ),
                 onWebViewCreated: (c) => _controller = c,
                 onLoadStop: (c, url) {
@@ -76,6 +78,18 @@ class _WebShellState extends State<WebShell> {
                 onGeolocationPermissionsShowPrompt: (c, origin) async {
                   return GeolocationPermissionShowPromptResponse(
                     origin: origin, allow: true, retain: true);
+                },
+                // 非 http(s) 链接(拨号 tel:、邮件 mailto:、短信 sms:、微信/支付宝 scheme…)
+                // 交给系统外部 App 处理,否则 WebView 当网页加载会失败(拨打电话点了没反应的根因)。
+                shouldOverrideUrlLoading: (c, action) async {
+                  final uri = action.request.url;
+                  if (uri != null && !['http', 'https', 'about', 'data', 'javascript'].contains(uri.scheme)) {
+                    try {
+                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    } catch (_) {}
+                    return NavigationActionPolicy.CANCEL;
+                  }
+                  return NavigationActionPolicy.ALLOW;
                 },
                 // ↓ WebView 默认不处理网页 alert/confirm/prompt(会直接返回 false)。
                 //   这里接成原生弹窗,网页里的报价确认/删除/举报/注销等才不会静默失效。
